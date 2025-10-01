@@ -3,8 +3,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import LetterCard from '../components/LetterCard';
 import LetterModal from '../components/LetterModal';
 import LetterCardSkeleton from '../components/LetterCardSkeleton';
-import { MOCK_LETTERS } from '../constants';
 import { SearchIcon } from '../components/icons/SearchIcon';
+import { api } from '../api-client';
 import type { Letter } from '../types';
 
 const BrowsePage: React.FC = () => {
@@ -14,32 +14,20 @@ const BrowsePage: React.FC = () => {
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    // Simulate an API call to fetch letters
-    const timer = setTimeout(() => {
+    const fetchLetters = async () => {
+      setLoading(true);
       try {
-        const storedLettersRaw = localStorage.getItem('allLetters');
-        let allLetters: Letter[] = [];
-        if (storedLettersRaw) {
-          allLetters = JSON.parse(storedLettersRaw);
-        } else {
-          // If no letters, seed with mock data and save to localStorage
-          allLetters = MOCK_LETTERS;
-          localStorage.setItem('allLetters', JSON.stringify(allLetters));
-        }
-        // Sort by most recent first
-        allLetters.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setLetters(allLetters);
+        const fetchedLetters = await api.getLetters();
+        setLetters(fetchedLetters);
       } catch (error) {
-        console.error("Failed to parse letters from local storage", error);
-        // Fallback to mock letters in case of parsing error
-        const sortedMockLetters = [...MOCK_LETTERS].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setLetters(sortedMockLetters);
+        console.error("Failed to fetch letters", error);
+        setLetters([]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 1500); // 1.5-second delay for demonstration
+    };
 
-    return () => clearTimeout(timer); // Cleanup on component unmount
+    fetchLetters();
   }, []);
 
   const filteredLetters = useMemo(() => {

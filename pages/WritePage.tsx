@@ -1,64 +1,62 @@
 
 import React, { useState } from 'react';
 import { EnvelopeIcon } from '../components/icons/EnvelopeIcon';
-import type { Letter } from '../types';
+import { api } from '../api-client';
 
 const WritePage: React.FC = () => {
   const [to, setTo] = useState('');
   const [content, setContent] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!to.trim() || !content.trim()) {
       setError('Both "To" and "Content" fields are required.');
       return;
     }
     
-    const letterId = Date.now();
-
-    const myLetter: Letter = {
-        id: letterId,
-        to: to.trim(),
-        content: content.trim(),
-        date: new Date().toISOString(),
-        author: 'You (local)',
-    };
+    setLoading(true);
+    setError('');
     
-    const publicLetter: Letter = {
-        id: letterId,
+    try {
+      const result = await api.submitLetter({
         to: to.trim(),
         content: content.trim(),
         date: new Date().toISOString(),
         author: 'Anonymous',
-    };
-    
-    try {
-        // Save to myLetters for History page
+      });
+      
+      const myLetter = {
+        id: result.id,
+        to: to.trim(),
+        content: content.trim(),
+        date: new Date().toISOString(),
+        author: 'You',
+      };
+      
+      try {
         const existingMyLetters = JSON.parse(localStorage.getItem('myLetters') || '[]');
         const updatedMyLetters = [...existingMyLetters, myLetter];
         localStorage.setItem('myLetters', JSON.stringify(updatedMyLetters));
-        
-        // Save to allLetters for Browse page
-        const existingAllLetters = JSON.parse(localStorage.getItem('allLetters') || '[]');
-        const updatedAllLetters = [...existingAllLetters, publicLetter];
-        localStorage.setItem('allLetters', JSON.stringify(updatedAllLetters));
-    } catch (err) {
-        console.error("Could not save letter to local storage", err);
-        setError("There was an issue saving your letter. Please try again.");
-        return;
-    }
-
-    setError('');
-    setSubmitted(true);
-    
-    // Reset form after a delay
-    setTimeout(() => {
+      } catch (storageErr) {
+        console.warn('Could not save to local history', storageErr);
+      }
+      
+      setSubmitted(true);
+      
+      setTimeout(() => {
         setSubmitted(false);
         setTo('');
         setContent('');
-    }, 5000);
+      }, 5000);
+    } catch (err) {
+      console.error("Failed to submit letter", err);
+      setError(err instanceof Error ? err.message : "There was an issue submitting your letter. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -112,9 +110,10 @@ const WritePage: React.FC = () => {
             </p>
             <button
               type="submit"
-              className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-full text-white bg-gray-900 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition-colors w-full sm:w-auto"
+              disabled={loading}
+              className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-full text-white bg-gray-900 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send Letter
+              {loading ? 'Sending...' : 'Send Letter'}
             </button>
           </div>
         </form>
