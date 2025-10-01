@@ -10,6 +10,12 @@ export default defineConfig(() => {
         hmr: {
           clientPort: 443,
         },
+        proxy: {
+          '/api': {
+            target: 'http://localhost:8080',
+            changeOrigin: true,
+          }
+        }
       },
       plugins: [react()],
       resolve: {

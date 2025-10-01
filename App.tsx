@@ -9,6 +9,7 @@ import BrowsePage from './pages/BrowsePage';
 import DonationPage from './pages/DonationPage';
 import HistoryPage from './pages/HistoryPage';
 import TermsPage from './pages/TermsPage';
+import AdminPage from './pages/AdminPage';
 
 const App: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const App: React.FC = () => {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/donate" element={<DonationPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </main>
         <Footer />
