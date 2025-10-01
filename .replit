@@ -17,6 +17,10 @@ author = "agent"
 task = "workflow.run"
 args = "Dev Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "PHP API Server"
+
 [[workflows.workflow]]
 name = "Dev Server"
 author = "agent"
@@ -29,9 +33,30 @@ waitForPort = 5000
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow]]
+name = "PHP API Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "php -S localhost:8080 -t api"
+waitForPort = 8080
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+exposeLocalhost = true
+
+[[ports]]
+localPort = 38607
+externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
