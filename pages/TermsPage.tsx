@@ -12,7 +12,7 @@ const TermsPage: React.FC = () => {
     <div className="py-12 md:py-20 max-w-3xl mx-auto animate-fadeIn">
       <div className="text-center">
         <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">Terms of Service</h1>
-        <p className="mt-4 text-gray-500">Last updated: {lastUpdatedDate}</p>
+        <p className="mt-4 text-gray-500">Last updated: September 28, 2025</p>
       </div>
 
       <div className="mt-12 space-y-8 text-gray-700 leading-relaxed">

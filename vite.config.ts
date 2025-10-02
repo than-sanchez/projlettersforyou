@@ -7,6 +7,9 @@ export default defineConfig(() => {
       server: {
         port: 5000,
         host: '0.0.0.0',
+        allowedHosts: [
+          'd9eb2099-2421-461a-b754-1da31aa27558-00-1aealgsbk71gg.riker.replit.dev'
+        ],
         hmr: {
           clientPort: 443,
         },
