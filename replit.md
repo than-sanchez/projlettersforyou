@@ -8,24 +8,40 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes (October 3, 2025)
 
+**Environment Configuration (.env support)**: Added .env file support for easier hosting migration.
+- System now reads from `.env` file first, then falls back to environment variables
+- `.env.example` template provided with all required configuration variables
+- `.env` added to `.gitignore` for security
+- Simplifies deployment to external hosting providers
+
+**Database-Backed Admin User Management**: Complete admin user management system with role-based permissions.
+- Admins stored in MySQL `admins` table (username, password_hash, role, permissions)
+- Four granular permission types: manage_letters, manage_moderation, manage_admins, manage_blog
+- Default admin account created via `api/init_admin.php`: username "Flaredy", role "Owner", all permissions enabled
+- Admin Users tab in admin panel for creating/editing/deleting admin accounts (requires manage_admins permission)
+- Permission-based UI: tabs and features only shown if admin has required permissions
+
+**Blog System with WYSIWYG Editor**: Full-featured blog system for publishing content.
+- Blog posts stored in MySQL `blog_posts` table with title, content, slug, author, publish status
+- Quill WYSIWYG editor (loaded from CDN) for rich text content creation
+- Automatic slug generation from post titles with uniqueness enforcement
+- Admin blog management page (`/blog-manage`) for creating/editing/publishing posts (requires manage_blog permission)
+- Public blog pages: `/blog` (list view) and `/blog/:slug` (individual post view)
+- Blog navigation link added to main header
+- Posts attributed to admin authors (username + role displayed)
+
 **MySQL Database Migration**: Migrated from SQLite to MySQL database for better scalability and production readiness.
 - Updated database connection to use MySQL with PDO
-- Environment variables: MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+- Configuration via .env file: MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
 - Tables now use InnoDB engine with utf8mb4 charset
+- AES-256-CBC encryption for letter content
 
-**Enhanced Admin Authentication**: Upgraded admin authentication system with username/password login.
-- Admin credentials stored securely in environment variables (ADMIN_USERNAME, ADMIN_PASSWORD)
-- Current admin: username "Flaredy", role "Owner"
-- Password hashing using bcrypt (PASSWORD_BCRYPT)
-- Secure token-based authentication using HMAC-SHA256 signatures
-- Tokens expire after 24 hours
-- Login form now requires both username and password
-
-**Security Improvements**:
-- Passwords are hashed server-side, never stored in plaintext
-- Tokens use cryptographic signatures to prevent tampering
+**Security Enhancements**:
+- All admin passwords hashed with bcrypt (PASSWORD_BCRYPT)
+- HMAC-SHA256 signed authentication tokens with 24-hour expiration
+- Permission checks enforced on all admin API endpoints
 - Database connection errors sanitized to prevent information leakage
-- Admin role displayed in dashboard header
+- Admin role and permissions displayed in dashboard header
 
 # System Architecture
 
@@ -74,7 +90,7 @@ Preferred communication style: Simple, everyday language.
 - **Encryption**: AES-256-CBC encryption for all letter content using environment-based key
 - **Admin Auth**: Username/password authentication with bcrypt hashing
 - **Secure Tokens**: HMAC-SHA256 signed tokens with 24-hour expiration
-- **Admin Credentials**: Stored in environment variables (ADMIN_USERNAME, ADMIN_PASSWORD)
+- **Admin Database**: Admins stored in MySQL `admins` table with role-based permissions
 
 **API Client Structure** (`api-client.ts`):
 - `getLetters()` - Fetch all public letters (GET /api/letters.php)
@@ -84,15 +100,26 @@ Preferred communication style: Simple, everyday language.
 - `getModerationWords()` - Fetch blocked words list (admin-only)
 - `addModerationWord()` - Add word to blocklist (admin-only)
 - `deleteModerationWord()` - Remove word from blocklist (admin-only)
+- `getAdminUsers()` - Fetch all admin users (requires manage_admins permission)
+- `createAdminUser()` - Create new admin (requires manage_admins permission)
+- `updateAdminUser()` - Update admin details (requires manage_admins permission)
+- `deleteAdminUser()` - Delete admin (requires manage_admins permission)
+- `getBlogPosts()` - Fetch blog posts (public: published only; admin: all)
+- `getBlogPost()` - Fetch single blog post by slug or ID
+- `createBlogPost()` - Create blog post (requires manage_blog permission)
+- `updateBlogPost()` - Update blog post (requires manage_blog permission)
+- `deleteBlogPost()` - Delete blog post (requires manage_blog permission)
 
 **Key Features**:
 - **Content Moderation**: Word-based filtering system to prevent inappropriate content
 - **Admin Panel**: Username/password-protected admin interface (`/admin` route) for letter management and moderation
 - **Secure Token Auth**: HMAC-signed tokens with expiration stored in sessionStorage
 - **Encrypted Storage**: All sensitive data encrypted at rest in MySQL database
-- **Role-based Access**: Admin role system (current: "Owner" role)
+- **Role-based Access**: Admin role and granular permission system with four permission types
+- **Admin User Management**: Full CRUD operations for managing admin accounts with permission controls
+- **Blog System**: Complete blog functionality with WYSIWYG editing and public/admin views
 
-**Pros**: Secure encrypted storage, production-ready database, secure token authentication, easy moderation system
+**Pros**: Secure encrypted storage, production-ready database, secure token authentication, granular permission system, easy moderation
 **Cons**: Requires MySQL server; encryption key management required; token expiration requires re-login
 
 ## Client-Side Features
@@ -163,15 +190,18 @@ Preferred communication style: Simple, everyday language.
 - `/api/letters.php` - Letter CRUD operations (GET, POST, DELETE with admin auth)
 - `/api/admin.php` - Admin authentication with username/password
 - `/api/moderation.php` - Moderation word management (admin-protected)
+- `/api/admin_users.php` - Admin user CRUD operations (requires manage_admins permission)
+- `/api/blog.php` - Blog post CRUD operations (public GET, admin mutations require manage_blog)
+- `/api/init_admin.php` - Initialize default admin account (Flaredy) on first run
 
-**Environment Variables**:
+**Environment Variables** (configured via .env file or environment):
 - `ENCRYPTION_KEY` - AES-256 encryption key for letter content and token signatures
 - `MYSQL_HOST` - MySQL server hostname
 - `MYSQL_DATABASE` - MySQL database name
 - `MYSQL_USER` - MySQL username
 - `MYSQL_PASSWORD` - MySQL password
-- `ADMIN_USERNAME` - Admin username (set to "Flaredy")
-- `ADMIN_PASSWORD` - Admin password (set to "coolest204")
+- `ADMIN_USERNAME` - Legacy admin username (for initialization, now stored in database)
+- `ADMIN_PASSWORD` - Legacy admin password (for initialization, now stored in database)
 
 ## Third-Party Services
 
