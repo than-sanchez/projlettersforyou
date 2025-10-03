@@ -9,17 +9,21 @@ switch ($method) {
         $data = json_decode(file_get_contents('php://input'), true);
         
         if (isset($data['action']) && $data['action'] === 'login') {
+            $username = $data['username'] ?? '';
             $password = $data['password'] ?? '';
             
-            if (password_verify($password, ADMIN_PASSWORD_HASH)) {
+            if (verifyAdmin($username, $password)) {
+                $token = generateToken($username);
                 echo json_encode([
                     'success' => true,
-                    'token' => $password,
+                    'token' => $token,
+                    'username' => $username,
+                    'role' => 'Owner',
                     'message' => 'Login successful'
                 ]);
             } else {
                 http_response_code(401);
-                echo json_encode(['error' => 'Invalid password']);
+                echo json_encode(['error' => 'Invalid username or password']);
             }
         } else {
             http_response_code(400);

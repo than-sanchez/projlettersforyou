@@ -3,10 +3,12 @@ import { api, type Letter, type ModerationWord } from '../api-client';
 
 const AdminPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [adminRole, setAdminRole] = useState('');
   
   const [letters, setLetters] = useState<Letter[]>([]);
   const [moderationWords, setModerationWords] = useState<ModerationWord[]>([]);
@@ -16,8 +18,12 @@ const AdminPage: React.FC = () => {
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('adminToken');
-    if (savedToken) {
+    const savedUsername = sessionStorage.getItem('adminUsername');
+    const savedRole = sessionStorage.getItem('adminRole');
+    if (savedToken && savedUsername) {
       setToken(savedToken);
+      setUsername(savedUsername);
+      setAdminRole(savedRole || '');
       setIsAuthenticated(true);
       loadAdminData(savedToken);
     }
@@ -42,11 +48,15 @@ const AdminPage: React.FC = () => {
     setError('');
     
     try {
-      const result = await api.adminLogin(password);
+      const result = await api.adminLogin(username, password);
       setToken(result.token);
+      setAdminRole(result.role || '');
       sessionStorage.setItem('adminToken', result.token);
+      sessionStorage.setItem('adminUsername', username);
+      sessionStorage.setItem('adminRole', result.role || '');
       setIsAuthenticated(true);
       await loadAdminData(result.token);
+      setUsername('');
       setPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -90,8 +100,12 @@ const AdminPage: React.FC = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminUsername');
+    sessionStorage.removeItem('adminRole');
     setIsAuthenticated(false);
     setToken('');
+    setUsername('');
+    setAdminRole('');
     setLetters([]);
     setModerationWords([]);
   };
@@ -102,8 +116,21 @@ const AdminPage: React.FC = () => {
         <h1 className="text-4xl font-bold font-serif text-center text-gray-900">Admin Login</h1>
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
           <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-800 focus:border-gray-800"
+              required
+            />
+          </div>
+          <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Admin Password
+              Password
             </label>
             <input
               id="password"
@@ -130,7 +157,10 @@ const AdminPage: React.FC = () => {
   return (
     <div className="py-12 md:py-20 animate-fadeIn">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold font-serif text-gray-900">Admin Dashboard</h1>
+        <div>
+          <h1 className="text-4xl font-bold font-serif text-gray-900">Admin Dashboard</h1>
+          {adminRole && <p className="text-sm text-gray-600 mt-1">Role: {adminRole}</p>}
+        </div>
         <button
           onClick={handleLogout}
           className="bg-red-600 text-white py-2 px-4 rounded-full hover:bg-red-700"

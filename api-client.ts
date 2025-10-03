@@ -45,11 +45,11 @@ export const api = {
     if (!response.ok) throw new Error('Failed to delete letter');
   },
 
-  async adminLogin(password: string): Promise<{ success: boolean; token: string }> {
+  async adminLogin(username: string, password: string): Promise<{ success: boolean; token: string; username?: string; role?: string }> {
     const response = await fetch(`${API_BASE_URL}/admin.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', password })
+      body: JSON.stringify({ action: 'login', username, password })
     });
     if (!response.ok) {
       const error = await response.json();
