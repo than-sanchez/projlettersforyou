@@ -8,7 +8,7 @@ export default defineConfig(() => {
         port: 5000,
         host: '0.0.0.0',
         allowedHosts: [
-          '0e25dfcc-a180-4928-ac18-797f974f3e4e-00-2dh8xsjowhvi4.pike.replit.dev'
+          '8701b24c-61b5-48c4-85f5-593f15e99d8e-00-2mtsicz9sc19h.sisko.replit.dev'
         ],
         hmr: {
           clientPort: 443,

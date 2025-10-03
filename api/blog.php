@@ -61,7 +61,7 @@ switch ($method) {
                 if ($isAdmin) {
                     $stmt = $db->prepare("SELECT * FROM blog_posts WHERE id = ?");
                 } else {
-                    $stmt = $db->prepare("SELECT * FROM blog_posts WHERE id = ? AND published = TRUE");
+                    $stmt = $db->prepare("SELECT * FROM blog_posts WHERE id = ? AND published = 1");
                 }
                 $stmt->execute([$id]);
                 $post = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -78,7 +78,7 @@ switch ($method) {
                 if ($isAdmin) {
                     $stmt = $db->prepare("SELECT * FROM blog_posts WHERE slug = ?");
                 } else {
-                    $stmt = $db->prepare("SELECT * FROM blog_posts WHERE slug = ? AND published = TRUE");
+                    $stmt = $db->prepare("SELECT * FROM blog_posts WHERE slug = ? AND published = 1");
                 }
                 $stmt->execute([$slug]);
                 $post = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -95,7 +95,7 @@ switch ($method) {
                 if ($isAdmin) {
                     $stmt = $db->query("SELECT * FROM blog_posts ORDER BY created_at DESC");
                 } else {
-                    $stmt = $db->query("SELECT * FROM blog_posts WHERE published = TRUE ORDER BY published_at DESC");
+                    $stmt = $db->query("SELECT * FROM blog_posts WHERE published = 1 ORDER BY published_at DESC");
                 }
                 $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 

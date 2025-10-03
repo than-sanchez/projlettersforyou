@@ -8,6 +8,13 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes (October 3, 2025)
 
+**Database Fix (Latest)**: Reverted to SQLite for better portability and deployment flexibility.
+- Fixed "Database connection failed" error caused by inaccessible external MySQL server
+- Switched back to SQLite database (api/letters.db) for file-based, portable storage
+- Updated schema to SQLite-compatible syntax (INTEGER PRIMARY KEY AUTOINCREMENT, removed ENGINE clauses)
+- Fixed admin login JSON error by including 'username' field in SELECT query
+- Removed MySQL credentials from .env (no longer needed)
+
 **Environment Configuration (.env support)**: Added .env file support for easier hosting migration.
 - System now reads from `.env` file first, then falls back to environment variables
 - `.env.example` template provided with all required configuration variables
@@ -15,26 +22,20 @@ Preferred communication style: Simple, everyday language.
 - Simplifies deployment to external hosting providers
 
 **Database-Backed Admin User Management**: Complete admin user management system with role-based permissions.
-- Admins stored in MySQL `admins` table (username, password_hash, role, permissions)
+- Admins stored in `admins` table (username, password_hash, role, permissions)
 - Four granular permission types: manage_letters, manage_moderation, manage_admins, manage_blog
-- Default admin account created via `api/init_admin.php`: username "Flaredy", role "Owner", all permissions enabled
+- Default admin account created on first database access: username "Flaredy", role "Owner", all permissions enabled
 - Admin Users tab in admin panel for creating/editing/deleting admin accounts (requires manage_admins permission)
 - Permission-based UI: tabs and features only shown if admin has required permissions
 
 **Blog System with WYSIWYG Editor**: Full-featured blog system for publishing content.
-- Blog posts stored in MySQL `blog_posts` table with title, content, slug, author, publish status
+- Blog posts stored in `blog_posts` table with title, content, slug, author, publish status
 - Quill WYSIWYG editor (loaded from CDN) for rich text content creation
 - Automatic slug generation from post titles with uniqueness enforcement
 - Admin blog management page (`/blog-manage`) for creating/editing/publishing posts (requires manage_blog permission)
 - Public blog pages: `/blog` (list view) and `/blog/:slug` (individual post view)
 - Blog navigation link added to main header
 - Posts attributed to admin authors (username + role displayed)
-
-**MySQL Database Migration**: Migrated from SQLite to MySQL database for better scalability and production readiness.
-- Updated database connection to use MySQL with PDO
-- Configuration via .env file: MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
-- Tables now use InnoDB engine with utf8mb4 charset
-- AES-256-CBC encryption for letter content
 
 **Security Enhancements**:
 - All admin passwords hashed with bcrypt (PASSWORD_BCRYPT)
@@ -65,32 +66,32 @@ Preferred communication style: Simple, everyday language.
 
 **Problem**: Need to store user-submitted letters securely while maintaining user anonymity and providing personal history tracking.
 
-**Solution**: Hybrid storage approach using encrypted MySQL database for server-side persistence and browser localStorage for personal letter history.
+**Solution**: Hybrid storage approach using encrypted SQLite database for server-side persistence and browser localStorage for personal letter history.
 
 **Key Decisions**:
-- **MySQL Database** with AES-256-CBC encryption for all letter content
-- **Production-ready database** using InnoDB engine with utf8mb4 character set
+- **SQLite Database** (api/letters.db) with AES-256-CBC encryption for all letter content
+- **File-based database** for portability and easy deployment to various hosting providers
 - **Server-side storage** via PHP API endpoints for publicly browsable letters
 - **localStorage** for maintaining user's personal letter history (stored on client device only)
 - **No user authentication** - all submissions are anonymous by design
 - **Encryption Layer**: All letter content and recipient information encrypted at rest
 - Letters include: id, to (recipient description), content, author (always "Anonymous" for public), and date
 
-**Pros**: Secure encrypted storage, true anonymity, no user data collection, scalable database architecture
-**Cons**: User history lost if localStorage is cleared, no cross-device synchronization, requires MySQL server
+**Pros**: Secure encrypted storage, true anonymity, no user data collection, portable file-based database
+**Cons**: User history lost if localStorage is cleared, no cross-device synchronization
 
 ## API Architecture
 
 **Problem**: Need backend endpoints for letter submission, retrieval, and admin moderation without complex authentication for regular users.
 
-**Solution**: RESTful PHP 8.4 API with MySQL database, secure token-based admin authentication, and content moderation system.
+**Solution**: RESTful PHP 8.4 API with SQLite database, secure token-based admin authentication, and content moderation system.
 
 **Backend Structure**:
-- **Database**: MySQL with encrypted storage (InnoDB, utf8mb4)
+- **Database**: SQLite with encrypted storage (file-based at api/letters.db)
 - **Encryption**: AES-256-CBC encryption for all letter content using environment-based key
 - **Admin Auth**: Username/password authentication with bcrypt hashing
 - **Secure Tokens**: HMAC-SHA256 signed tokens with 24-hour expiration
-- **Admin Database**: Admins stored in MySQL `admins` table with role-based permissions
+- **Admin Database**: Admins stored in SQLite `admins` table with role-based permissions
 
 **API Client Structure** (`api-client.ts`):
 - `getLetters()` - Fetch all public letters (GET /api/letters.php)
@@ -114,13 +115,13 @@ Preferred communication style: Simple, everyday language.
 - **Content Moderation**: Word-based filtering system to prevent inappropriate content
 - **Admin Panel**: Username/password-protected admin interface (`/admin` route) for letter management and moderation
 - **Secure Token Auth**: HMAC-signed tokens with expiration stored in sessionStorage
-- **Encrypted Storage**: All sensitive data encrypted at rest in MySQL database
+- **Encrypted Storage**: All sensitive data encrypted at rest in SQLite database
 - **Role-based Access**: Admin role and granular permission system with four permission types
 - **Admin User Management**: Full CRUD operations for managing admin accounts with permission controls
 - **Blog System**: Complete blog functionality with WYSIWYG editing and public/admin views
 
-**Pros**: Secure encrypted storage, production-ready database, secure token authentication, granular permission system, easy moderation
-**Cons**: Requires MySQL server; encryption key management required; token expiration requires re-login
+**Pros**: Secure encrypted storage, portable file-based database, secure token authentication, granular permission system, easy moderation, no separate database server required
+**Cons**: Encryption key management required; token expiration requires re-login; file-based database may have concurrency limitations at very high scale
 
 ## Client-Side Features
 
@@ -183,7 +184,7 @@ Preferred communication style: Simple, everyday language.
 
 **Server Stack**:
 - **PHP 8.4** runtime for API endpoints
-- **MySQL** database for letter storage with encryption
+- **SQLite** database (api/letters.db) for letter storage with encryption
 - PHP built-in development server (dev) / production server for deployment
 
 **API Endpoints**:
@@ -192,16 +193,11 @@ Preferred communication style: Simple, everyday language.
 - `/api/moderation.php` - Moderation word management (admin-protected)
 - `/api/admin_users.php` - Admin user CRUD operations (requires manage_admins permission)
 - `/api/blog.php` - Blog post CRUD operations (public GET, admin mutations require manage_blog)
-- `/api/init_admin.php` - Initialize default admin account (Flaredy) on first run
 
 **Environment Variables** (configured via .env file or environment):
 - `ENCRYPTION_KEY` - AES-256 encryption key for letter content and token signatures
-- `MYSQL_HOST` - MySQL server hostname
-- `MYSQL_DATABASE` - MySQL database name
-- `MYSQL_USER` - MySQL username
-- `MYSQL_PASSWORD` - MySQL password
-- `ADMIN_USERNAME` - Legacy admin username (for initialization, now stored in database)
-- `ADMIN_PASSWORD` - Legacy admin password (for initialization, now stored in database)
+- `ADMIN_USERNAME` - Admin username for default account initialization (stored in database after first run)
+- `ADMIN_PASSWORD` - Admin password for default account initialization (stored in database after first run)
 
 ## Third-Party Services
 

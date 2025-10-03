@@ -135,7 +135,7 @@ function verifyAdmin($username = null, $password = null, $db = null) {
     }
     
     if ($username !== null && $password !== null) {
-        $stmt = $db->prepare("SELECT id, password_hash, role, permissions FROM admins WHERE username = ?");
+        $stmt = $db->prepare("SELECT id, username, password_hash, role, permissions FROM admins WHERE username = ?");
         $stmt->execute([$username]);
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
         
