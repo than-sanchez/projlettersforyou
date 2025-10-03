@@ -35,58 +35,55 @@ function loadEnv($filePath) {
 loadEnv(__DIR__ . '/../.env');
 
 define('ENCRYPTION_KEY', getenv('ENCRYPTION_KEY') ?: 'default-key-change-in-production');
+define('DB_PATH', __DIR__ . '/letters.db');
 
-define('MYSQL_HOST', getenv('MYSQL_HOST'));
-define('MYSQL_DATABASE', getenv('MYSQL_DATABASE'));
-define('MYSQL_USER', getenv('MYSQL_USER'));
-define('MYSQL_PASSWORD', getenv('MYSQL_PASSWORD'));
-
-define('ADMIN_USERNAME', getenv('ADMIN_USERNAME'));
-define('ADMIN_PASSWORD_HASH', password_hash(getenv('ADMIN_PASSWORD') ?: '', PASSWORD_BCRYPT));
+define('ADMIN_USERNAME', getenv('ADMIN_USERNAME') ?: 'admin');
+define('ADMIN_PASSWORD_HASH', password_hash(getenv('ADMIN_PASSWORD') ?: 'admin', PASSWORD_BCRYPT));
 
 function getDB() {
     try {
-        $dsn = 'mysql:host=' . MYSQL_HOST . ';dbname=' . MYSQL_DATABASE . ';charset=utf8mb4';
-        $db = new PDO($dsn, MYSQL_USER, MYSQL_PASSWORD);
+        $db = new PDO('sqlite:' . DB_PATH);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
         $db->exec("CREATE TABLE IF NOT EXISTS letters (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             recipient TEXT NOT NULL,
             content TEXT NOT NULL,
-            author VARCHAR(255) DEFAULT 'Anonymous',
-            date VARCHAR(255) NOT NULL,
+            author TEXT DEFAULT 'Anonymous',
+            date TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        )");
         
         $db->exec("CREATE TABLE IF NOT EXISTS moderation_words (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            word VARCHAR(255) NOT NULL UNIQUE,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            word TEXT NOT NULL UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        )");
         
         $db->exec("CREATE TABLE IF NOT EXISTS admins (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(255) NOT NULL UNIQUE,
-            password_hash VARCHAR(255) NOT NULL,
-            role VARCHAR(100) DEFAULT 'Admin',
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'Admin',
             permissions TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
         
         $db->exec("CREATE TABLE IF NOT EXISTS blog_posts (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(500) NOT NULL,
-            slug VARCHAR(500) NOT NULL UNIQUE,
-            content LONGTEXT NOT NULL,
-            author_id INT NOT NULL,
-            published BOOLEAN DEFAULT FALSE,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            content TEXT NOT NULL,
+            author_id INTEGER NOT NULL,
+            published INTEGER DEFAULT 0,
             published_at TIMESTAMP NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (author_id) REFERENCES admins(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        )");
+        
+        $db->exec("PRAGMA foreign_keys = ON");
         
         initDefaultAdmin($db);
         
