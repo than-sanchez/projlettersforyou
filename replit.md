@@ -6,6 +6,27 @@ Letters For You is a web-based platform that enables users to write and share an
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes (October 3, 2025)
+
+**MySQL Database Migration**: Migrated from SQLite to MySQL database for better scalability and production readiness.
+- Updated database connection to use MySQL with PDO
+- Environment variables: MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+- Tables now use InnoDB engine with utf8mb4 charset
+
+**Enhanced Admin Authentication**: Upgraded admin authentication system with username/password login.
+- Admin credentials stored securely in environment variables (ADMIN_USERNAME, ADMIN_PASSWORD)
+- Current admin: username "Flaredy", role "Owner"
+- Password hashing using bcrypt (PASSWORD_BCRYPT)
+- Secure token-based authentication using HMAC-SHA256 signatures
+- Tokens expire after 24 hours
+- Login form now requires both username and password
+
+**Security Improvements**:
+- Passwords are hashed server-side, never stored in plaintext
+- Tokens use cryptographic signatures to prevent tampering
+- Database connection errors sanitized to prevent information leakage
+- Admin role displayed in dashboard header
+
 # System Architecture
 
 ## Frontend Architecture
@@ -28,48 +49,51 @@ Preferred communication style: Simple, everyday language.
 
 **Problem**: Need to store user-submitted letters securely while maintaining user anonymity and providing personal history tracking.
 
-**Solution**: Hybrid storage approach using encrypted SQLite database for server-side persistence and browser localStorage for personal letter history.
+**Solution**: Hybrid storage approach using encrypted MySQL database for server-side persistence and browser localStorage for personal letter history.
 
 **Key Decisions**:
-- **SQLite Database** with AES-256-CBC encryption for all letter content
+- **MySQL Database** with AES-256-CBC encryption for all letter content
+- **Production-ready database** using InnoDB engine with utf8mb4 character set
 - **Server-side storage** via PHP API endpoints for publicly browsable letters
 - **localStorage** for maintaining user's personal letter history (stored on client device only)
 - **No user authentication** - all submissions are anonymous by design
 - **Encryption Layer**: All letter content and recipient information encrypted at rest
 - Letters include: id, to (recipient description), content, author (always "Anonymous" for public), and date
 
-**Pros**: Secure encrypted storage, true anonymity, no user data collection, simple architecture
-**Cons**: User history lost if localStorage is cleared, no cross-device synchronization
+**Pros**: Secure encrypted storage, true anonymity, no user data collection, scalable database architecture
+**Cons**: User history lost if localStorage is cleared, no cross-device synchronization, requires MySQL server
 
 ## API Architecture
 
 **Problem**: Need backend endpoints for letter submission, retrieval, and admin moderation without complex authentication for regular users.
 
-**Solution**: RESTful PHP 8.4 API with SQLite database, token-based admin authentication, and content moderation system.
+**Solution**: RESTful PHP 8.4 API with MySQL database, secure token-based admin authentication, and content moderation system.
 
 **Backend Structure**:
-- **Database**: SQLite with encrypted storage in `api/letters.db`
+- **Database**: MySQL with encrypted storage (InnoDB, utf8mb4)
 - **Encryption**: AES-256-CBC encryption for all letter content using environment-based key
-- **Admin Auth**: Password-based authentication with bcrypt hashing
-- **Default Admin Password**: `admin123` (should be changed via ADMIN_PASSWORD environment variable)
+- **Admin Auth**: Username/password authentication with bcrypt hashing
+- **Secure Tokens**: HMAC-SHA256 signed tokens with 24-hour expiration
+- **Admin Credentials**: Stored in environment variables (ADMIN_USERNAME, ADMIN_PASSWORD)
 
 **API Client Structure** (`api-client.ts`):
 - `getLetters()` - Fetch all public letters (GET /api/letters.php)
 - `submitLetter()` - Submit new letter (POST /api/letters.php)
 - `deleteLetter()` - Admin-only deletion with Bearer token (DELETE /api/letters.php)
-- `adminLogin()` - Password-based admin authentication (POST /api/admin.php)
+- `adminLogin(username, password)` - Username/password admin authentication (POST /api/admin.php)
 - `getModerationWords()` - Fetch blocked words list (admin-only)
 - `addModerationWord()` - Add word to blocklist (admin-only)
 - `deleteModerationWord()` - Remove word from blocklist (admin-only)
 
 **Key Features**:
 - **Content Moderation**: Word-based filtering system to prevent inappropriate content
-- **Admin Panel**: Password-protected admin interface (`/admin` route) for letter management and moderation
-- **Session-based Admin Auth**: Token stored in sessionStorage for admin session persistence
-- **Encrypted Storage**: All sensitive data encrypted at rest in SQLite database
+- **Admin Panel**: Username/password-protected admin interface (`/admin` route) for letter management and moderation
+- **Secure Token Auth**: HMAC-signed tokens with expiration stored in sessionStorage
+- **Encrypted Storage**: All sensitive data encrypted at rest in MySQL database
+- **Role-based Access**: Admin role system (current: "Owner" role)
 
-**Pros**: Secure encrypted storage, simple stateless API, easy moderation system, minimal infrastructure
-**Cons**: PHP dependency; basic authentication mechanism; encryption key management required
+**Pros**: Secure encrypted storage, production-ready database, secure token authentication, easy moderation system
+**Cons**: Requires MySQL server; encryption key management required; token expiration requires re-login
 
 ## Client-Side Features
 
@@ -132,17 +156,22 @@ Preferred communication style: Simple, everyday language.
 
 **Server Stack**:
 - **PHP 8.4** runtime for API endpoints
-- **SQLite** database for letter storage with encryption
+- **MySQL** database for letter storage with encryption
 - PHP built-in development server (dev) / production server for deployment
 
 **API Endpoints**:
 - `/api/letters.php` - Letter CRUD operations (GET, POST, DELETE with admin auth)
-- `/api/admin.php` - Admin authentication
+- `/api/admin.php` - Admin authentication with username/password
 - `/api/moderation.php` - Moderation word management (admin-protected)
 
 **Environment Variables**:
-- `ENCRYPTION_KEY` - AES-256 encryption key for letter content (defaults to 'default-key-change-in-production')
-- `ADMIN_PASSWORD` - Admin panel password (defaults to 'admin123')
+- `ENCRYPTION_KEY` - AES-256 encryption key for letter content and token signatures
+- `MYSQL_HOST` - MySQL server hostname
+- `MYSQL_DATABASE` - MySQL database name
+- `MYSQL_USER` - MySQL username
+- `MYSQL_PASSWORD` - MySQL password
+- `ADMIN_USERNAME` - Admin username (set to "Flaredy")
+- `ADMIN_PASSWORD` - Admin password (set to "coolest204")
 
 ## Third-Party Services
 
