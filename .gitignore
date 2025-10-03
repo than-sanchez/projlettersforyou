@@ -18,6 +18,9 @@ dist-ssr
 *.sqlite3
 api/letters.db
 
+# Environment variables
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

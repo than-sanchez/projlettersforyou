@@ -12,13 +12,15 @@ switch ($method) {
             $username = $data['username'] ?? '';
             $password = $data['password'] ?? '';
             
-            if (verifyAdmin($username, $password)) {
-                $token = generateToken($username);
+            $admin = verifyAdmin($username, $password, $db);
+            if ($admin) {
+                $token = generateToken($admin['username'], $admin['id']);
                 echo json_encode([
                     'success' => true,
                     'token' => $token,
-                    'username' => $username,
-                    'role' => 'Owner',
+                    'username' => $admin['username'],
+                    'role' => $admin['role'],
+                    'permissions' => json_decode($admin['permissions'], true),
                     'message' => 'Login successful'
                 ]);
             } else {

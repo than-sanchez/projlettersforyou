@@ -65,6 +65,13 @@ const Header: React.FC = () => {
                   History
                 </NavLink>
                 <NavLink 
+                  to="/blog" 
+                  title="Read blog posts"
+                  className={({ isActive }) => `${linkBaseClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
+                >
+                  Blog
+                </NavLink>
+                <NavLink 
                   to="/donate" 
                   title="Support the project"
                   className={({ isActive }) => `${linkBaseClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
@@ -132,6 +139,13 @@ const Header: React.FC = () => {
                     className="text-3xl font-serif text-gray-700 hover:text-gray-900 transition-colors"
                   >
                     History
+                  </NavLink>
+                  <NavLink 
+                    to="/blog" 
+                    title="Read blog posts"
+                    className="text-3xl font-serif text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Blog
                   </NavLink>
                   <NavLink 
                     to="/donate" 
