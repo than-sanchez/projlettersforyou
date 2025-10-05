@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">Interact</h3>
             <ul className="mt-4 space-y-4">
               <li><a href="#" title="Follow us on Instagram" className="text-base text-gray-600 hover:text-gray-900">Instagram</a></li>
-              <li><a href="#" title="Follow us on X (Twitter)" className="text-base text-gray-600 hover:text-gray-900">X (Twitter)</a></li>
+              <li><a href="#" title="Follow us on Tiktok" className="text-base text-gray-600 hover:text-gray-900">Tiktok</a></li>
             </ul>
           </div>
         </div>
